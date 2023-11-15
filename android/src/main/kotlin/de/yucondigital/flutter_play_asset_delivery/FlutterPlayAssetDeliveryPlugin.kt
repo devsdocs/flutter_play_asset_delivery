@@ -1,26 +1,23 @@
 package de.yucondigital.flutter_play_asset_delivery
 
-import android.app.Activity
-import android.content.Context
 import android.content.res.AssetManager
 import androidx.annotation.NonNull
-
 import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.systemchannels.SettingsChannel.CHANNEL_NAME
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
 import java.io.File
 
 /** FlutterPlayAssetDeliveryPlugin */
-class FlutterPlayAssetDeliveryPlugin: FlutterPlugin, MethodCallHandler {
-  private lateinit var channel : MethodChannel
-  private lateinit var assetManager : AssetManager
-  private lateinit var assetList : List<String>
+class FlutterPlayAssetDeliveryPlugin : FlutterPlugin, MethodCallHandler {
+  private lateinit var channel: MethodChannel
+  private lateinit var assetManager: AssetManager
+  private lateinit var assetList: List<String>
 
-  override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+  override fun onAttachedToEngine(
+      @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
+  ) {
     assetManager = flutterPluginBinding.applicationContext.assets
     fetchAllAssets()
 
@@ -39,6 +36,9 @@ class FlutterPlayAssetDeliveryPlugin: FlutterPlugin, MethodCallHandler {
       } else {
         result.error("Asset not found", "Asset could not be found.", null)
       }
+    } else if (call.method == "getAllFoldersAndFiles") {
+      val foldersAndFiles: List<String> = getAllFoldersAndFiles()
+      result.success(foldersAndFiles)
     } else {
       result.notImplemented()
     }
@@ -46,6 +46,31 @@ class FlutterPlayAssetDeliveryPlugin: FlutterPlugin, MethodCallHandler {
 
   private fun fetchAllAssets() {
     assetList = assetManager.list("")?.asList() ?: emptyList()
+  }
+
+  private fun getAllFoldersAndFiles(): List<String> {
+    val folderStack = mutableListOf<String>()
+    val fileList = mutableListOf<String>()
+
+    folderStack.add("") // Add an empty string to represent the root directory
+
+    while (folderStack.isNotEmpty()) {
+      val currentFolder = folderStack.removeAt(0)
+      val assetsInFolder = assetManager.list(currentFolder) ?: emptyArray()
+
+      for (asset in assetsInFolder) {
+        val assetPath = "$currentFolder/$asset"
+        val isDirectory = assetManager.list(assetPath)?.isNotEmpty() ?: false
+
+        if (isDirectory) {
+          folderStack.add(assetPath)
+        } else {
+          fileList.add(assetPath)
+        }
+      }
+    }
+
+    return fileList
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {

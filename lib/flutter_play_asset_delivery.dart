@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 
@@ -6,7 +5,9 @@ import 'package:flutter/services.dart';
 
 class FlutterPlayAssetDelivery {
   static const String _methodGetAsset = "getAssetFile";
-  static const MethodChannel _channel = MethodChannel('flutter_play_asset_delivery');
+  static const String _methodGetAllAsset = "getAllFoldersAndFiles";
+  static const MethodChannel _channel =
+      MethodChannel('flutter_play_asset_delivery');
 
   static Future<File> getAssetFile(String asset) async {
     try {
@@ -20,5 +21,9 @@ class FlutterPlayAssetDelivery {
 
   static Future<String> getAbsoluteFilePath(String asset) async {
     return (await _channel.invokeMethod(_methodGetAsset, asset)) as String;
+  }
+
+  static Future<List<String>> getAllFilesPath() async {
+    return (await _channel.invokeMethod(_methodGetAsset)) as List<String>;
   }
 }
